@@ -1,5 +1,5 @@
 
-import { Bell, Calendar, Search, Upload, MessageCircle, Pills } from "lucide-react";
+import { Bell, Calendar, Search, Upload, MessageCircle, Pill } from "lucide-react";
 
 interface FeatureCardProps {
   icon: React.ReactNode;
@@ -47,7 +47,7 @@ export function FeaturesSection() {
       description: "Never miss an appointment with timely notifications and medication reminders tailored to your schedule."
     },
     {
-      icon: <Pills className="h-6 w-6" />,
+      icon: <Pill className="h-6 w-6" />,
       title: "Online Pharmacy",
       description: "Order prescribed medications online and have them delivered directly to your doorstep."
     }
