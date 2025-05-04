@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -8,6 +8,7 @@ interface AuthContextType {
   register: (formData: RegisterFormData) => Promise<void>;
   logout: () => void;
   user: UserData | null;
+  userType: string | null;
 }
 
 interface UserData {
@@ -31,6 +32,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<UserData | null>(null);
+  const [userType, setUserType] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Check if user is already logged in
@@ -40,6 +42,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         const userData = JSON.parse(storedUser);
         setUser(userData);
+        setUserType(userData.userType);
         setIsAuthenticated(true);
       } catch (error) {
         console.error("Error parsing stored user data:", error);
@@ -55,16 +58,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setTimeout(() => {
         try {
           // Mock login - in a real app, this would be an API call
+          // Here we're simulating different user types
+          const userType = email.includes("doctor") ? "doctor" : "patient";
+          
           const mockUser = {
             id: "user123",
             email,
-            firstName: "John",
+            firstName: userType === "doctor" ? "Dr. John" : "John",
             lastName: "Doe",
-            userType: "patient"
+            userType
           };
           
           localStorage.setItem("medNexusUser", JSON.stringify(mockUser));
           setUser(mockUser);
+          setUserType(mockUser.userType);
           setIsAuthenticated(true);
           
           toast({
@@ -97,6 +104,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           
           localStorage.setItem("medNexusUser", JSON.stringify(mockUser));
           setUser(mockUser);
+          setUserType(mockUser.userType);
           setIsAuthenticated(true);
           
           toast({
@@ -116,6 +124,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = () => {
     localStorage.removeItem("medNexusUser");
     setUser(null);
+    setUserType(null);
     setIsAuthenticated(false);
     
     toast({
@@ -131,7 +140,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         login,
         register,
         logout,
-        user
+        user,
+        userType
       }}
     >
       {children}

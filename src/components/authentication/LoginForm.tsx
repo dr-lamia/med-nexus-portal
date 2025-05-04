@@ -13,12 +13,12 @@ export function LoginForm() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { login } = useAuth();
+  const { login, userType } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Get redirect path from location state or default to home
-  const from = location.state?.from || "/";
+  // Get redirect path from location state or default to dashboard
+  const from = location.state?.from || "/dashboard";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,8 +26,13 @@ export function LoginForm() {
     
     try {
       await login(email, password);
-      // Redirect to the page they tried to visit or home
-      navigate(from, { replace: true });
+      
+      // Redirect based on user type
+      if (userType === "doctor") {
+        navigate("/doctor-dashboard", { replace: true });
+      } else {
+        navigate("/patient-dashboard", { replace: true });
+      }
     } catch (error) {
       toast({
         title: "Login failed",
@@ -101,13 +106,21 @@ export function LoginForm() {
           </Button>
         </div>
       </CardContent>
-      <CardFooter className="flex justify-center">
-        <p className="text-sm text-gray-600">
-          Don't have an account?{" "}
-          <Link to="/register" className="font-medium text-primary hover:underline">
-            Sign up
-          </Link>
-        </p>
+      <CardFooter>
+        <div className="w-full space-y-2">
+          <p className="text-sm text-center text-gray-600">
+            Don't have an account?{" "}
+            <Link to="/register" className="font-medium text-primary hover:underline">
+              Sign up
+            </Link>
+          </p>
+          <p className="text-sm text-center text-gray-600">
+            Are you a healthcare provider?{" "}
+            <Link to="/doctor-registration" className="font-medium text-primary hover:underline">
+              Register as Doctor
+            </Link>
+          </p>
+        </div>
       </CardFooter>
     </Card>
   );
