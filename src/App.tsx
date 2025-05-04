@@ -20,6 +20,7 @@ import Services from "./pages/Services";
 import Pharmacy from "./pages/Pharmacy";
 import MedicalRecords from "./pages/MedicalRecords";
 import OnlineConsultation from "./pages/OnlineConsultation";
+import Appointments from "./pages/Appointments";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 
@@ -99,6 +100,11 @@ const App = () => (
             <Route path="/online-consultation" element={
               <ProtectedRoute>
                 <OnlineConsultation />
+              </ProtectedRoute>
+            } />
+            <Route path="/appointments" element={
+              <ProtectedRoute>
+                <Appointments />
               </ProtectedRoute>
             } />
             
