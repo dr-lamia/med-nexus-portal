@@ -1,12 +1,14 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { RegisterFormData } from "@/contexts/AuthContext";
 
 export function RegisterForm() {
   const [userType, setUserType] = useState("patient");
@@ -17,6 +19,8 @@ export function RegisterForm() {
   const [lastName, setLastName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { register } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,21 +37,23 @@ export function RegisterForm() {
     setIsLoading(true);
     
     try {
-      // Mock registration success
-      setTimeout(() => {
-        toast({
-          title: "Registration successful",
-          description: "Your account has been created. You can now sign in.",
-        });
-        setIsLoading(false);
-        // Normally would redirect to login or dashboard here
-      }, 1500);
+      const formData: RegisterFormData = {
+        email,
+        password,
+        firstName,
+        lastName,
+        userType
+      };
+      
+      await register(formData);
+      navigate("/");
     } catch (error) {
       toast({
         title: "Registration failed",
         description: "There was a problem creating your account.",
         variant: "destructive",
       });
+    } finally {
       setIsLoading(false);
     }
   };

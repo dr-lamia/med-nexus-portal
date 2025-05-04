@@ -1,5 +1,5 @@
 
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -10,9 +10,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Bell, MessageCircle, User } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function Header() {
-  const isLoggedIn = false; // Replace with actual authentication state
+  const { isAuthenticated, logout, user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
 
   return (
     <header className="w-full bg-white border-b sticky top-0 z-10">
@@ -42,7 +49,7 @@ export function Header() {
         </nav>
 
         <div className="flex items-center space-x-2">
-          {isLoggedIn ? (
+          {isAuthenticated ? (
             <>
               <Button variant="ghost" size="icon" aria-label="Notifications">
                 <Bell className="h-5 w-5 text-med-neutral-700" />
@@ -57,20 +64,20 @@ export function Header() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuLabel>
+                    {user?.firstName} {user?.lastName}
+                    <div className="text-xs font-normal text-gray-500">{user?.email}</div>
+                  </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem>
-                    <Link to="/dashboard" className="w-full">Dashboard</Link>
+                    <Link to="/medical-records" className="w-full">Medical Records</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem>
-                    <Link to="/profile" className="w-full">Profile</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Link to="/appointments" className="w-full">Appointments</Link>
+                    <Link to="/find-doctors" className="w-full">Find Doctors</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <button className="w-full text-left">Logout</button>
+                  <DropdownMenuItem onClick={handleLogout}>
+                    Logout
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
