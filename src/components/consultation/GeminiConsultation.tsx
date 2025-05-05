@@ -11,6 +11,9 @@ type Message = {
   content: string;
 };
 
+// Embedding the API key directly in the component
+const GEMINI_API_KEY = "AIzaSyCWPGCKvs7zKIzqWYnrgIJh5mmyCOG5zXQ";
+
 export const GeminiConsultation = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -20,8 +23,6 @@ export const GeminiConsultation = () => {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [apiKey, setApiKey] = useState<string | null>(localStorage.getItem("gemini_api_key"));
-  const [showApiKeyInput, setShowApiKeyInput] = useState(!apiKey);
   const { toast } = useToast();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -31,31 +32,7 @@ export const GeminiConsultation = () => {
     }
   }, [messages]);
 
-  const saveApiKey = (key: string) => {
-    if (key.trim() === "") {
-      toast({
-        title: "API Key Required",
-        description: "Please enter a valid Gemini API key",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    localStorage.setItem("gemini_api_key", key);
-    setApiKey(key);
-    setShowApiKeyInput(false);
-    toast({
-      title: "API Key Saved",
-      description: "Your Gemini API key has been saved for this session",
-    });
-  };
-
   const sendMessage = async () => {
-    if (!apiKey) {
-      setShowApiKeyInput(true);
-      return;
-    }
-
     if (input.trim() === "") return;
 
     // Add user message to chat
@@ -69,7 +46,7 @@ export const GeminiConsultation = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-goog-api-key": apiKey
+          "x-goog-api-key": GEMINI_API_KEY
         },
         body: JSON.stringify({
           contents: [
@@ -136,7 +113,7 @@ export const GeminiConsultation = () => {
       console.error("Error calling Gemini API:", error);
       toast({
         title: "Error",
-        description: "Failed to get a response. Please check your API key and try again.",
+        description: "Failed to get a response. Please try again later.",
         variant: "destructive",
       });
       
@@ -159,32 +136,6 @@ export const GeminiConsultation = () => {
 
   return (
     <div className="flex flex-col h-[600px]">
-      {showApiKeyInput ? (
-        <div className="bg-muted p-4 rounded-md mb-4">
-          <h3 className="font-semibold mb-2">Gemini API Key Required</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            To use the AI health assistant, please enter your Gemini API key. You can get one from{" "}
-            <a
-              href="https://aistudio.google.com/app/apikey"
-              target="_blank"
-              rel="noreferrer"
-              className="text-primary underline"
-            >
-              Google AI Studio
-            </a>
-          </p>
-          <div className="flex gap-2">
-            <Textarea
-              placeholder="Paste your Gemini API key here"
-              value={apiKey || ""}
-              onChange={(e) => setApiKey(e.target.value)}
-              className="flex-1"
-            />
-            <Button onClick={() => saveApiKey(apiKey || "")}>Save</Button>
-          </div>
-        </div>
-      ) : null}
-
       <ScrollArea className="flex-1 p-4 bg-accent/10 rounded-md mb-4 overflow-y-auto" ref={scrollAreaRef}>
         <div className="space-y-4">
           {messages.map((message, index) => (
