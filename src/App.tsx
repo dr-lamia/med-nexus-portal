@@ -21,6 +21,7 @@ import Pharmacy from "./pages/Pharmacy";
 import MedicalRecords from "./pages/MedicalRecords";
 import OnlineConsultation from "./pages/OnlineConsultation";
 import Appointments from "./pages/Appointments";
+import BookAppointment from "./pages/BookAppointment";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 
@@ -105,6 +106,11 @@ const App = () => (
             <Route path="/appointments" element={
               <ProtectedRoute>
                 <Appointments />
+              </ProtectedRoute>
+            } />
+            <Route path="/book-appointment/:id" element={
+              <ProtectedRoute>
+                <BookAppointment />
               </ProtectedRoute>
             } />
             
