@@ -1,20 +1,43 @@
 
-import { Bell, Calendar, Search, Upload, MessageCircle, Pill } from "lucide-react";
+import { 
+  Video, 
+  FileText, 
+  ClipboardList, 
+  FlaskConical, 
+  User, 
+  Activity 
+} from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface FeatureCardProps {
   icon: React.ReactNode;
   title: string;
   description: string;
+  link?: string;
 }
 
-function FeatureCard({ icon, title, description }: FeatureCardProps) {
-  return (
-    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+function FeatureCard({ icon, title, description, link }: FeatureCardProps) {
+  const CardContent = () => (
+    <>
       <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center text-primary mb-4">
         {icon}
       </div>
       <h3 className="text-lg font-medium text-med-neutral-900 mb-2">{title}</h3>
       <p className="text-med-neutral-600">{description}</p>
+    </>
+  );
+
+  if (link) {
+    return (
+      <Link to={link} className="block bg-white p-6 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+        <CardContent />
+      </Link>
+    );
+  }
+
+  return (
+    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+      <CardContent />
     </div>
   );
 }
@@ -22,34 +45,40 @@ function FeatureCard({ icon, title, description }: FeatureCardProps) {
 export function FeaturesSection() {
   const features = [
     {
-      icon: <Search className="h-6 w-6" />,
-      title: "Find Specialists",
-      description: "Search for doctors by specialty, location, and availability to find the perfect match for your needs."
+      icon: <Video className="h-6 w-6" />,
+      title: "Online Consultations",
+      description: "Connect with healthcare professionals from the comfort of your home through secure video calls.",
+      link: "/online-consultation"
     },
     {
-      icon: <Calendar className="h-6 w-6" />,
-      title: "Easy Scheduling",
-      description: "Book appointments online and receive confirmations instantly. Manage your medical calendar effortlessly."
+      icon: <FileText className="h-6 w-6" />,
+      title: "Medical Records",
+      description: "Access and share your medical records securely. Upload test results and track your health journey.",
+      link: "/medical-records"
     },
     {
-      icon: <Upload className="h-6 w-6" />,
-      title: "Digital Records",
-      description: "Access and share your medical records securely. Upload test results and track your health journey."
+      icon: <ClipboardList className="h-6 w-6" />,
+      title: "Prescription Management",
+      description: "Get digital prescriptions and order refills without visiting the clinic.",
+      link: "/pharmacy"
     },
     {
-      icon: <MessageCircle className="h-6 w-6" />,
-      title: "Connect with Doctors",
-      description: "Chat with healthcare providers, get quick advice, and attend virtual consultations from anywhere."
+      icon: <FlaskConical className="h-6 w-6" />,
+      title: "Lab Results",
+      description: "Receive and review your test results online with explanations from your doctor.",
+      link: "/medical-records"
     },
     {
-      icon: <Bell className="h-6 w-6" />,
-      title: "Smart Reminders",
-      description: "Never miss an appointment with timely notifications and medication reminders tailored to your schedule."
+      icon: <User className="h-6 w-6" />,
+      title: "Specialist Referrals",
+      description: "Quick and easy referrals to specialists when you need advanced care.",
+      link: "/find-doctors"
     },
     {
-      icon: <Pill className="h-6 w-6" />,
-      title: "Online Pharmacy",
-      description: "Order prescribed medications online and have them delivered directly to your doorstep."
+      icon: <Activity className="h-6 w-6" />,
+      title: "Health Monitoring",
+      description: "Track your health metrics and share them directly with your healthcare provider.",
+      link: "/patient-dashboard"
     }
   ];
 
@@ -69,6 +98,7 @@ export function FeaturesSection() {
               icon={feature.icon}
               title={feature.title}
               description={feature.description}
+              link={feature.link}
             />
           ))}
         </div>
