@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -66,7 +65,7 @@ const specialtyMapping: Record<string, { name: string, description: string, rout
   },
 };
 
-// Embedding the API key directly in the component - using the UPDATED Gemini API endpoint
+// Using the Gemini API endpoint
 const GEMINI_API_KEY = "AIzaSyCWPGCKvs7zKIzqWYnrgIJh5mmyCOG5zXQ";
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
 
@@ -163,6 +162,31 @@ export const GuidedConsultation = () => {
     try {
       const combinedResponses = responses.join("\n");
       
+      // First, let's try to determine the specialty using keywords in the responses
+      const lowerResponses = combinedResponses.toLowerCase();
+      
+      // Check for dental keywords first
+      if (lowerResponses.includes("tooth") || 
+          lowerResponses.includes("teeth") || 
+          lowerResponses.includes("gum") || 
+          lowerResponses.includes("molar") || 
+          lowerResponses.includes("mouth") || 
+          lowerResponses.includes("dental") ||
+          lowerResponses.includes("swelling in my mouth")) {
+        setRecommendedSpecialty("dental");
+        const specialtyInfo = specialtyMapping["dental"];
+        const summaryMessage: Message = { 
+          role: "assistant", 
+          content: `Based on your symptoms about issues in your mouth, I recommend consulting with a ${specialtyInfo.name} specialist. ${specialtyInfo.description}. Would you like me to help you find a ${specialtyInfo.name} specialist?` 
+        };
+        
+        setMessages(prev => [...prev, summaryMessage]);
+        setDiagnosisComplete(true);
+        setIsLoading(false);
+        return;
+      }
+      
+      // If no clear keywords are found, use the API for more sophisticated analysis
       const response = await fetch(GEMINI_API_URL, {
         method: "POST",
         headers: {
@@ -219,19 +243,45 @@ export const GuidedConsultation = () => {
           setRecommendedSpecialty("general");
         }
       } else {
-        throw new Error("Failed to get specialty recommendation");
+        // Fallback logic if API fails but we have clear dental terms
+        if (lowerResponses.includes("mouth") || lowerResponses.includes("tooth") || lowerResponses.includes("teeth") || lowerResponses.includes("gum")) {
+          setRecommendedSpecialty("dental");
+          const specialtyInfo = specialtyMapping["dental"];
+          const summaryMessage: Message = { 
+            role: "assistant", 
+            content: `Based on your symptoms related to oral health, I recommend consulting with a ${specialtyInfo.name} specialist. ${specialtyInfo.description}. Would you like me to help you find a ${specialtyInfo.name} specialist?` 
+          };
+          
+          setMessages(prev => [...prev, summaryMessage]);
+        } else {
+          throw new Error("Failed to get specialty recommendation");
+        }
       }
     } catch (error) {
       console.error("Error determining specialty:", error);
       
-      // Fallback recommendation
-      const fallbackMessage: Message = { 
-        role: "assistant", 
-        content: "I'm having trouble analyzing your symptoms. To be safe, I recommend consulting with a general practitioner who can provide a proper evaluation. Would you like me to help you find a doctor?" 
-      };
+      // Additional fallback based on keywords for common conditions
+      const lowerResponses = responses.join(" ").toLowerCase();
       
-      setMessages(prev => [...prev, fallbackMessage]);
-      setRecommendedSpecialty("general");
+      if (lowerResponses.includes("mouth") || lowerResponses.includes("tooth") || lowerResponses.includes("teeth") || 
+          lowerResponses.includes("gum") || lowerResponses.includes("dental") || lowerResponses.includes("molar")) {
+        setRecommendedSpecialty("dental");
+        const specialtyInfo = specialtyMapping["dental"];
+        const summaryMessage: Message = { 
+          role: "assistant", 
+          content: `Based on your oral health symptoms, I recommend consulting with a ${specialtyInfo.name} specialist. ${specialtyInfo.description}. Would you like me to help you find a ${specialtyInfo.name} specialist?` 
+        };
+        setMessages(prev => [...prev, summaryMessage]);
+      } else {
+        // Generic fallback recommendation
+        const fallbackMessage: Message = { 
+          role: "assistant", 
+          content: "I'm having trouble analyzing your symptoms. To be safe, I recommend consulting with a general practitioner who can provide a proper evaluation. Would you like me to help you find a doctor?" 
+        };
+        
+        setMessages(prev => [...prev, fallbackMessage]);
+        setRecommendedSpecialty("general");
+      }
     } finally {
       setDiagnosisComplete(true);
       setIsLoading(false);
