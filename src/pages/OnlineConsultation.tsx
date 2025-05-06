@@ -7,28 +7,50 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Video, Bot, MessageSquare } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { GeminiConsultation } from "@/components/consultation/GeminiConsultation";
+import { GuidedConsultation } from "@/components/consultation/GuidedConsultation";
 import { Link } from "react-router-dom";
 
 const OnlineConsultation = () => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState("ai-consultation");
+  const [activeTab, setActiveTab] = useState("guided-consultation");
 
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-6">Online Consultations</h1>
         
-        <Tabs defaultValue="ai-consultation" onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="ai-consultation" className="flex items-center gap-2">
+        <Tabs defaultValue="guided-consultation" onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="guided-consultation" className="flex items-center gap-2">
               <Bot className="h-4 w-4" />
-              <span>AI Health Assistant</span>
+              <span>Symptom Checker</span>
+            </TabsTrigger>
+            <TabsTrigger value="ai-consultation" className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              <span>General Health Chat</span>
             </TabsTrigger>
             <TabsTrigger value="doctor-consultation" className="flex items-center gap-2">
               <Video className="h-4 w-4" />
               <span>Doctor Consultation</span>
             </TabsTrigger>
           </TabsList>
+          
+          <TabsContent value="guided-consultation" className="mt-6">
+            <Card className="border-2 border-primary/10">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bot className="h-5 w-5 text-primary" />
+                  Interactive Symptom Checker
+                </CardTitle>
+                <CardDescription>
+                  Answer a few questions about your symptoms to get matched with the right specialist
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <GuidedConsultation />
+              </CardContent>
+            </Card>
+          </TabsContent>
           
           <TabsContent value="ai-consultation" className="mt-6">
             <Card className="border-2 border-primary/10">
@@ -66,8 +88,8 @@ const OnlineConsultation = () => {
                   <Button className="mr-4" asChild>
                     <Link to="/find-doctors">Find Doctors</Link>
                   </Button>
-                  <Button variant="outline" onClick={() => setActiveTab("ai-consultation")}>
-                    Use AI Assistant
+                  <Button variant="outline" onClick={() => setActiveTab("guided-consultation")}>
+                    Use Symptom Checker
                   </Button>
                 </div>
               </CardContent>
