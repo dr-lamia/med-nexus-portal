@@ -42,7 +42,8 @@ export const GeminiConsultation = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent", {
+      // Updated API endpoint URL
+      const response = await fetch("https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
