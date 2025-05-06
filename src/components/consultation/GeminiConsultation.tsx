@@ -13,6 +13,7 @@ type Message = {
 
 // Embedding the API key directly in the component
 const GEMINI_API_KEY = "AIzaSyCWPGCKvs7zKIzqWYnrgIJh5mmyCOG5zXQ";
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
 
 export const GeminiConsultation = () => {
   const [messages, setMessages] = useState<Message[]>([
@@ -42,8 +43,7 @@ export const GeminiConsultation = () => {
     setIsLoading(true);
 
     try {
-      // Updated API endpoint URL
-      const response = await fetch("https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent", {
+      const response = await fetch(GEMINI_API_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

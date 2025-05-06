@@ -12,15 +12,6 @@ type Message = {
   content: string;
 };
 
-// Structured diagnosis questions
-const diagnosticQuestions = [
-  "Hello! I'm your AI health assistant. To help direct you to the right specialist, I'll ask a few questions. What's your main health concern today?",
-  "How long have you been experiencing these symptoms?",
-  "On a scale of 1-10, how would you rate any pain or discomfort?",
-  "Have you noticed any other symptoms accompanying your main concern?",
-  "Do these symptoms affect your daily activities? If so, how?",
-];
-
 // Mapping symptoms to specialties
 const specialtyMapping: Record<string, { name: string, description: string, route: string }> = {
   "dental": { 
@@ -63,24 +54,35 @@ const specialtyMapping: Record<string, { name: string, description: string, rout
     description: "Disorders of the nervous system, including brain and spinal cord", 
     route: "/find-doctors?specialty=neurology" 
   },
+  "respiratory": {
+    name: "Pulmonology",
+    description: "Conditions affecting the lungs and breathing",
+    route: "/find-doctors?specialty=pulmonology"
+  },
+  "digestive": {
+    name: "Gastroenterology",
+    description: "Disorders of the digestive system including stomach, intestines, liver",
+    route: "/find-doctors?specialty=gastroenterology"
+  },
 };
 
-// Embedding the API key directly in the component
+// Embedding the API key directly in the component - using the UPDATED Gemini API endpoint
 const GEMINI_API_KEY = "AIzaSyCWPGCKvs7zKIzqWYnrgIJh5mmyCOG5zXQ";
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
 
 export const GuidedConsultation = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: diagnosticQuestions[0]
+      content: "Hello! I'm your AI health assistant. To help direct you to the right specialist, I'll ask a few questions. What's your main health concern today?"
     }
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [patientResponses, setPatientResponses] = useState<string[]>([]);
   const [diagnosisComplete, setDiagnosisComplete] = useState(false);
   const [recommendedSpecialty, setRecommendedSpecialty] = useState<string | null>(null);
+  const [questionCount, setQuestionCount] = useState(0);
   const { toast } = useToast();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -91,14 +93,77 @@ export const GuidedConsultation = () => {
     }
   }, [messages]);
 
+  // This function determines the next question based on previous responses
+  const generateNextQuestion = async (responses: string[]): Promise<string> => {
+    try {
+      const combinedResponses = responses.join("\n");
+      
+      const response = await fetch(GEMINI_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": GEMINI_API_KEY
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: "user",
+              parts: [
+                {
+                  text: `You are a medical professional conducting an initial patient interview. 
+                  Based on the patient's previous responses, generate ONE follow-up question that helps narrow down their medical condition.
+                  
+                  Patient's responses so far:
+                  ${combinedResponses}
+                  
+                  Guidelines:
+                  - Ask ONE specific question only
+                  - Focus on symptoms, severity, duration, or factors that trigger/relieve symptoms
+                  - Don't ask about treatment they've tried yet
+                  - Frame the question to help determine what medical specialty would be most appropriate
+                  - Keep the question concise (25 words or less) and compassionate
+                  - Do NOT suggest a diagnosis or recommend a specialist yet
+                  
+                  Reply with ONLY the next question, without any other text.`
+                }
+              ]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: 150,
+          }
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.candidates && data.candidates[0]?.content?.parts?.length > 0) {
+        return data.candidates[0].content.parts[0].text.trim();
+      } else {
+        // If we fail to get a dynamic question, use a fallback
+        const fallbackQuestions = [
+          "Could you describe any pain or discomfort you're experiencing?",
+          "Are there any specific times when your symptoms worsen?",
+          "Have you noticed any other symptoms alongside your main concern?",
+          "How have these symptoms affected your daily activities?",
+          "On a scale of 1-10, how would you rate the severity of your symptoms?"
+        ];
+        return fallbackQuestions[questionCount % fallbackQuestions.length];
+      }
+    } catch (error) {
+      console.error("Error generating next question:", error);
+      return "Could you tell me more about your symptoms?";
+    }
+  };
+
   const determineSpecialty = async (responses: string[]) => {
     setIsLoading(true);
     
     try {
-      const combinedResponses = responses.join(" ");
+      const combinedResponses = responses.join("\n");
       
-      // Updated API endpoint URL
-      const response = await fetch("https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent", {
+      const response = await fetch(GEMINI_API_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -111,7 +176,7 @@ export const GuidedConsultation = () => {
               parts: [
                 {
                   text: `Based on the following patient responses to a medical questionnaire, determine which single medical specialty would be most appropriate for their concerns. 
-                  Only respond with ONE of these exact specialty keywords: "dental", "child", "skin", "heart", "bone", "eye", "mental", "nerve".
+                  Only respond with ONE of these exact specialty keywords: "dental", "child", "skin", "heart", "bone", "eye", "mental", "nerve", "respiratory", "digestive".
                   DO NOT include any explanations, just the single keyword.
                   
                   Patient responses:
@@ -187,19 +252,29 @@ export const GuidedConsultation = () => {
     setInput("");
     setIsLoading(true);
 
-    // Move to next question if available
-    if (currentQuestionIndex < diagnosticQuestions.length - 1) {
-      const nextQuestionIndex = currentQuestionIndex + 1;
-      const nextQuestion = diagnosticQuestions[nextQuestionIndex];
-      
-      setTimeout(() => {
-        const assistantMessage: Message = { role: "assistant", content: nextQuestion };
-        setMessages((prev) => [...prev, assistantMessage]);
-        setCurrentQuestionIndex(nextQuestionIndex);
+    // Decide whether to ask another question or provide a diagnosis
+    if (questionCount < 4) {
+      try {
+        // Generate the next question based on previous responses
+        const nextQuestion = await generateNextQuestion(updatedResponses);
+        
+        setTimeout(() => {
+          const assistantMessage: Message = { role: "assistant", content: nextQuestion };
+          setMessages((prev) => [...prev, assistantMessage]);
+          setQuestionCount(prevCount => prevCount + 1);
+          setIsLoading(false);
+        }, 800); // Short delay to simulate thinking
+      } catch (error) {
+        console.error("Error in conversation flow:", error);
         setIsLoading(false);
-      }, 800); // Short delay to simulate thinking
+        toast({
+          title: "Error",
+          description: "There was a problem with the consultation. Please try again.",
+          variant: "destructive",
+        });
+      }
     } else {
-      // All questions answered, determine specialty
+      // After 5 responses (initial + 4 follow-ups), determine specialty
       await determineSpecialty(updatedResponses);
     }
   };
