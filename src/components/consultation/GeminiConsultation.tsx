@@ -11,9 +11,9 @@ type Message = {
   content: string;
 };
 
-// Embedding the API key directly in the component
+// Using the correct Gemini API endpoint
 const GEMINI_API_KEY = "AIzaSyCWPGCKvs7zKIzqWYnrgIJh5mmyCOG5zXQ";
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent";
 
 export const GeminiConsultation = () => {
   const [messages, setMessages] = useState<Message[]>([
@@ -52,7 +52,6 @@ export const GeminiConsultation = () => {
         body: JSON.stringify({
           contents: [
             {
-              role: "user",
               parts: [
                 {
                   text: `You are a helpful medical assistant who provides general health information. You always make it clear you're an AI and not a doctor and encourage users to seek professional medical advice for specific health concerns. 
@@ -107,6 +106,10 @@ export const GeminiConsultation = () => {
           content: "I'm unable to provide information on this topic. Please try asking something else or consult with a healthcare provider." 
         };
         setMessages((prev) => [...prev, assistantMessage]);
+      } else if (data.error) {
+        // Handle API error
+        console.error("Gemini API error:", data.error);
+        throw new Error(data.error.message || "Error calling Gemini API");
       } else {
         throw new Error("Unexpected response format");
       }
@@ -118,11 +121,24 @@ export const GeminiConsultation = () => {
         variant: "destructive",
       });
       
-      const errorMessage: Message = { 
-        role: "assistant", 
-        content: "I'm sorry, I encountered an error processing your request. Please try again later." 
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+      // For dental issues, provide a specific fallback response
+      if (input.toLowerCase().includes("tooth") || 
+          input.toLowerCase().includes("teeth") || 
+          input.toLowerCase().includes("dental") ||
+          input.toLowerCase().includes("gum") ||
+          input.toLowerCase().includes("mouth")) {
+        const dentalResponse: Message = { 
+          role: "assistant", 
+          content: "Based on your mention of dental symptoms, you should consult with a dentist as soon as possible. Dental issues like tooth pain, swelling, or discomfort can indicate infections or other conditions that should be addressed by a dental professional. While waiting for your appointment, you might consider taking over-the-counter pain medication if appropriate, and avoid very hot, cold, or sweet foods that might aggravate the area." 
+        };
+        setMessages((prev) => [...prev, dentalResponse]);
+      } else {
+        const errorMessage: Message = { 
+          role: "assistant", 
+          content: "I'm sorry, I encountered an error processing your request. Please try again later." 
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+      }
     } finally {
       setIsLoading(false);
     }

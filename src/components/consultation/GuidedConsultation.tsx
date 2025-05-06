@@ -65,9 +65,9 @@ const specialtyMapping: Record<string, { name: string, description: string, rout
   },
 };
 
-// Using the Gemini API endpoint
+// Using the correct Gemini API endpoint
 const GEMINI_API_KEY = "AIzaSyCWPGCKvs7zKIzqWYnrgIJh5mmyCOG5zXQ";
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent";
 
 export const GuidedConsultation = () => {
   const [messages, setMessages] = useState<Message[]>([
@@ -106,7 +106,6 @@ export const GuidedConsultation = () => {
         body: JSON.stringify({
           contents: [
             {
-              role: "user",
               parts: [
                 {
                   text: `You are a medical professional conducting an initial patient interview. 
@@ -172,7 +171,8 @@ export const GuidedConsultation = () => {
           lowerResponses.includes("molar") || 
           lowerResponses.includes("mouth") || 
           lowerResponses.includes("dental") ||
-          lowerResponses.includes("swelling in my mouth")) {
+          lowerResponses.includes("swelling in my mouth") ||
+          lowerResponses.includes("swelling in my tooth")) {
         setRecommendedSpecialty("dental");
         const specialtyInfo = specialtyMapping["dental"];
         const summaryMessage: Message = { 
@@ -196,7 +196,6 @@ export const GuidedConsultation = () => {
         body: JSON.stringify({
           contents: [
             {
-              role: "user",
               parts: [
                 {
                   text: `Based on the following patient responses to a medical questionnaire, determine which single medical specialty would be most appropriate for their concerns. 
@@ -242,9 +241,32 @@ export const GuidedConsultation = () => {
           setMessages(prev => [...prev, defaultMessage]);
           setRecommendedSpecialty("general");
         }
+      } else if (data.error) {
+        // Check for dental terms again if the API fails
+        if (lowerResponses.includes("mouth") || 
+            lowerResponses.includes("tooth") || 
+            lowerResponses.includes("teeth") || 
+            lowerResponses.includes("gum") || 
+            lowerResponses.includes("dental") || 
+            lowerResponses.includes("molar") ||
+            lowerResponses.includes("swelling in my tooth")) {
+          setRecommendedSpecialty("dental");
+          const specialtyInfo = specialtyMapping["dental"];
+          const summaryMessage: Message = { 
+            role: "assistant", 
+            content: `Based on your oral health symptoms, I recommend consulting with a ${specialtyInfo.name} specialist. ${specialtyInfo.description}. Would you like me to help you find a ${specialtyInfo.name} specialist?` 
+          };
+          setMessages(prev => [...prev, summaryMessage]);
+        } else {
+          throw new Error("Failed to get specialty recommendation");
+        }
       } else {
         // Fallback logic if API fails but we have clear dental terms
-        if (lowerResponses.includes("mouth") || lowerResponses.includes("tooth") || lowerResponses.includes("teeth") || lowerResponses.includes("gum")) {
+        if (lowerResponses.includes("mouth") || 
+            lowerResponses.includes("tooth") || 
+            lowerResponses.includes("teeth") || 
+            lowerResponses.includes("gum") ||
+            lowerResponses.includes("swelling in my tooth")) {
           setRecommendedSpecialty("dental");
           const specialtyInfo = specialtyMapping["dental"];
           const summaryMessage: Message = { 
@@ -263,8 +285,13 @@ export const GuidedConsultation = () => {
       // Additional fallback based on keywords for common conditions
       const lowerResponses = responses.join(" ").toLowerCase();
       
-      if (lowerResponses.includes("mouth") || lowerResponses.includes("tooth") || lowerResponses.includes("teeth") || 
-          lowerResponses.includes("gum") || lowerResponses.includes("dental") || lowerResponses.includes("molar")) {
+      if (lowerResponses.includes("mouth") || 
+          lowerResponses.includes("tooth") || 
+          lowerResponses.includes("teeth") || 
+          lowerResponses.includes("gum") || 
+          lowerResponses.includes("dental") || 
+          lowerResponses.includes("molar") ||
+          lowerResponses.includes("swelling in my tooth")) {
         setRecommendedSpecialty("dental");
         const specialtyInfo = specialtyMapping["dental"];
         const summaryMessage: Message = { 
